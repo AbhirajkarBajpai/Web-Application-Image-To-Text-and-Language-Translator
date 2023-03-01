@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Image_Info_Extractor</title>
+    <link rel="stylesheet" href="./index.css" />
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@v2.0.0-beta.2/dist/tesseract.min.js"></script>
+  </head>
+  <body>
+    <!-- <background Animation Starts Here> -->
+
+    <div class="bg-animation">
+      <div class="bg-1"></div>
+      <div class="bg-2"></div>
+      <div class="bg-3"></div>
+    </div>
+    <!-- <background Animation Ends Here> -->
+
+    <form id="form">
+      <div class="title" style="font-size: 4rem; margin-bottom: 2rem">
+        Image to Text Converter
+      </div>
+      <input type="file" id="fileInput" class="buttonDownload" />
+      <div class="fit">
+        <textarea id="textOutput"></textarea>
+        <textarea
+          spellcheck="false"
+          readonly
+          disabled
+          class="to-text"
+        ></textarea>
+      </div>
+      <div class="loader" id="loader"></div>
+
+      <!-- ---------------------------------button---------------------- -->
+      <div class="buttons" type="submit">
+        <button class="btn">
+          <span></span>
+          <p
+            data-start="good luck!"
+            data-text="Start!"
+            data-title="Get Text"
+          ></p>
+        </button>
+      </div>
+      <div class="lang-convertor">
+        <p>Translation</p>
+        From
+        <select></select>
+        To
+        <select></select>
+        <button style="margin-left: 1rem" id="translatetext" class="button-17">
+          Translate
+        </button>
+      </div>
+    </form>
+
+    <script src="countries.js"></script>
+    <script>
+      const form = document.getElementById("form");
+      const fileInput = document.getElementById("fileInput");
+      const textOutput = document.getElementById("textOutput");
+      const loader = document.getElementById("loader");
+      selectTag = document.querySelectorAll("select");
+      translateBtn = document.getElementById("translatetext");
+      toText = document.querySelector(".to-text");
+      loader.style.display = "none";
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        loader.style.display = "block";
+        Tesseract.recognize(fileInput.files[0], "eng", {
+          logger: (m) => console.log(m),
+        }).then(({ data: { text } }) => {
+          textOutput.value = text;
+          loader.style.display = "none";
+        });
+      });
+      selectTag.forEach((tag, id) => {
+        for (let country_code in countries) {
+          let selected =
+            id == 0
+              ? country_code == "en-GB"
+                ? "selected"
+                : ""
+              : country_code == "hi-IN"
+              ? "selected"
+              : "";
+          let option = `<option ${selected} value="${country_code}">${countries[country_code]}</option>`;
+          tag.insertAdjacentHTML("beforeend", option);
+        }
+      });
+
+      translateBtn.addEventListener("click", () => {
+        let text = textOutput.value.trim(),
+          translateFrom = selectTag[0].value,
+          translateTo = selectTag[1].value;
+        if (!text) return;
+        let apiUrl = `https://api.mymemory.translated.net/get?q=${text}&langpair=${translateFrom}|${translateTo}`;
+        fetch(apiUrl)
+          .then((res) => res.json())
+          .then((data) => {
+            toText.value = data.responseData.translatedText;
+            // data.matches.forEach((data) => {
+            //   if (data.id === 0) {
+            //     toText.value = data.translation;
+            //   }
+            // });
+            loader.style.display = "none";
+          });
+      });
+    </script>
+  </body>
+</html>
